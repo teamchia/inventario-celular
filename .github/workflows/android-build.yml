@@ -27,8 +27,14 @@ jobs:
           gradle-version: '8.2'
           cache-disabled: true
 
-      - name: Mostrar archivos del proyecto
-        run: ls -la
+      - name: Listar archivos raiz
+        run: |
+          echo "=== RAIZ ==="
+          ls -la
+          echo "=== APP ==="
+          ls -la app/ || echo "No existe carpeta app"
+          echo "=== PWD ==="
+          pwd
 
       - name: Build Debug APK
         run: gradle assembleDebug --stacktrace
