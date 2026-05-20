@@ -81,7 +81,10 @@ fun InventarioScreen(
             )
 
             if (uiState.repuestos.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "📦", style = MaterialTheme.typography.displayMedium)
                         Spacer(modifier = Modifier.height(16.dp))
@@ -94,7 +97,10 @@ fun InventarioScreen(
                     items(items = uiState.repuestos, key = { it.id }) { repuesto ->
                         RepuestoCard(
                             repuesto = repuesto,
-                            onClick = { onVerDetalle(repuesto.id) }
+                            onClick = {
+                                viewModel.seleccionarRepuesto(repuesto)
+                                onVerDetalle(repuesto.id)
+                            }
                         )
                     }
                 }
