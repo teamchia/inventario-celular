@@ -30,6 +30,11 @@ fun DetalleScreen(
     var esDescontar by remember { mutableStateOf(true) }
     var cantidadMovimiento by remember { mutableStateOf("1") }
 
+    // Cargar repuesto por ID si no está seleccionado
+    LaunchedEffect(repuestoId) {
+        viewModel.cargarRepuestoPorId(repuestoId)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -56,25 +61,54 @@ fun DetalleScreen(
             )
         }
     ) { paddingValues ->
-        repuesto?.let { r ->
-            Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-                Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(4.dp)) {
+        if (repuesto == null) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            val r = repuesto!!
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+            ) {
+                // Encabezado
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
                     Column(
                         modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(r.tipo, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                        Text(r.modelo, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                        Text(
+                            r.tipo,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            r.modelo,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
                         Text(r.marca, color = Color.Gray)
                         Spacer(modifier = Modifier.height(8.dp))
                         EstadoBadge(estado = r.estado)
                     }
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Stock
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (r.cantidad <= r.stockMinimo) Color(0xFFFFF3E0)
+                        containerColor = if (r.cantidad <= r.stockMinimo)
+                            Color(0xFFFFF3E0)
                         else MaterialTheme.colorScheme.primaryContainer
                     )
                 ) {
@@ -85,41 +119,71 @@ fun DetalleScreen(
                     ) {
                         Column {
                             Text("Cantidad en stock", color = Color.Gray)
-                            Text("${r.cantidad} unidades", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+                            Text(
+                                "${r.cantidad} unidades",
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
                             if (r.cantidad <= r.stockMinimo) {
-                                Text("⚠️ Stock bajo (mínimo: ${r.stockMinimo})", color = Color(0xFFE65100), fontSize = 12.sp)
+                                Text(
+                                    "⚠️ Stock bajo (mínimo: ${r.stockMinimo})",
+                                    color = Color(0xFFE65100),
+                                    fontSize = 12.sp
+                                )
                             }
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Button(
                                 onClick = { esDescontar = false; mostrarDialogoStock = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-                            ) { Icon(Icons.Default.Add, contentDescription = "Agregar") }
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF4CAF50)
+                                )
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Agregar")
+                            }
                             Spacer(modifier = Modifier.height(4.dp))
                             Button(
                                 onClick = { esDescontar = true; mostrarDialogoStock = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
-                            ) { Icon(Icons.Default.Remove, contentDescription = "Descontar") }
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFF44336)
+                                )
+                            ) {
+                                Icon(Icons.Default.Remove, contentDescription = "Descontar")
+                            }
                         }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Observación
                 if (r.observacion.isNotBlank()) {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Observación", fontWeight = FontWeight.SemiBold, color = Color.Gray)
+                            Text(
+                                "Observación",
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Gray
+                            )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(r.observacion)
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+
+                // Fecha
                 val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-                Text("Actualizado: ${formato.format(Date(r.fechaActualizacion))}", color = Color.Gray, fontSize = 12.sp)
+                Text(
+                    "Actualizado: ${formato.format(Date(r.fechaActualizacion))}",
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
             }
         }
     }
 
+    // Diálogo eliminar
     if (mostrarDialogoEliminar) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoEliminar = false },
@@ -133,11 +197,14 @@ fun DetalleScreen(
                 }) { Text("Eliminar", color = Color.Red) }
             },
             dismissButton = {
-                TextButton(onClick = { mostrarDialogoEliminar = false }) { Text("Cancelar") }
+                TextButton(onClick = { mostrarDialogoEliminar = false }) {
+                    Text("Cancelar")
+                }
             }
         )
     }
 
+    // Diálogo stock
     if (mostrarDialogoStock) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoStock = false },
@@ -145,7 +212,9 @@ fun DetalleScreen(
             text = {
                 OutlinedTextField(
                     value = cantidadMovimiento,
-                    onValueChange = { if (it.all { c -> c.isDigit() }) cantidadMovimiento = it },
+                    onValueChange = {
+                        if (it.all { c -> c.isDigit() }) cantidadMovimiento = it
+                    },
                     label = { Text("Cantidad") }
                 )
             },
@@ -160,7 +229,9 @@ fun DetalleScreen(
                 }) { Text("Confirmar") }
             },
             dismissButton = {
-                TextButton(onClick = { mostrarDialogoStock = false }) { Text("Cancelar") }
+                TextButton(onClick = { mostrarDialogoStock = false }) {
+                    Text("Cancelar")
+                }
             }
         )
     }
