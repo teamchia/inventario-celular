@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 data class InventarioUiState(
     val repuestos: List<Repuesto> = emptyList(),
     val busqueda: String = "",
+    val filtroEstado: String = "",
     val mostrarStockBajo: Boolean = false
 )
 
@@ -29,6 +30,13 @@ class RepuestoViewModel(private val repository: RepuestoRepository) : ViewModel(
             repository.obtenerTodos().collect { lista ->
                 _uiState.update { it.copy(repuestos = lista) }
             }
+        }
+    }
+
+    fun cargarRepuestoPorId(id: Int) {
+        viewModelScope.launch {
+            val repuesto = repository.obtenerPorId(id)
+            _repuestoSeleccionado.value = repuesto
         }
     }
 
@@ -95,14 +103,18 @@ class RepuestoViewModel(private val repository: RepuestoRepository) : ViewModel(
     fun descontarStock(repuesto: Repuesto, cantidad: Int) {
         viewModelScope.launch {
             repository.actualizar(
-                repuesto.copy(cantidad = (repuesto.cantidad - cantidad).coerceAtLeast(0))
+                repuesto.copy(
+                    cantidad = (repuesto.cantidad - cantidad).coerceAtLeast(0)
+                )
             )
         }
     }
 
     fun agregarStock(repuesto: Repuesto, cantidad: Int) {
         viewModelScope.launch {
-            repository.actualizar(repuesto.copy(cantidad = repuesto.cantidad + cantidad))
+            repository.actualizar(
+                repuesto.copy(cantidad = repuesto.cantidad + cantidad)
+            )
         }
     }
 }
